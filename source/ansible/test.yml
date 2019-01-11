@@ -1,0 +1,5 @@
+---
+- hosts: k8smaster
+  tasks:
+  - name: echo hello world
+    shell: echo 'Hello World'

@@ -1,0 +1,5 @@
+---
+- hosts: k8snode
+  roles:
+     - common
+     - k8snode
