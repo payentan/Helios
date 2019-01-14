@@ -1,5 +1,6 @@
 - name: Disable firewalld service
   service: name=firewalld state=stopped enabled=no
+
 - name: yum install -y yum-utils device-mapper-persistent-data lvm2
   yum: 
     name:
@@ -8,18 +9,25 @@
       - lvm2
     state:
       present
+      
 - name: Add repository
   shell: yum-config-manager add-repo https://mirrors.aliyun.com/docker-ce/linux/centos/docker-ce.repo
+
 - name: Disable docker edge & test repo
   shell: yum-config-manager --disable docker-ce-edge && yum-config-manager --disable docker-ce-test
+
 - name: yum install -y docker
   yum: name=docker-ce-18.06.1.ce-3.el7 state=present
+
 - name: Enable and start Docker service
   service: name=docker state=started enabled=yes
+
 - name: Try Docker service
   shell: docker run hello-world
+
 - name: Transfer kubernetes.repo
   copy: src=kubernetes.repo dest=/etc/yum.repos.d/kubernetes.repo
+
 - name: yum install -y kubelet kubeadm kubectl
   yum: 
     name:
@@ -28,9 +36,14 @@
       - kubectl
     state:
       present
+
 - name: Enable and start kubelet service
   service: name=kubelet state=started enabled=yes
+
 - name: Transfer file k8s.conf
   copy: src=k8s.conf dest=/etc/sysctl.d/k8s.conf
+
 - name: Set system parameters for k8s
   shell: sysctl --system
+- name: My amp goes to {{ K8S_VERSION }}
+  shell: echo 'skdjf'
