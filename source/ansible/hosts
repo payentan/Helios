@@ -1,3 +1,3 @@
 [k8smaster]
-localhost	ansible_ssh_user=root
+192.168.93.136 ansible_ssh_user=root
 

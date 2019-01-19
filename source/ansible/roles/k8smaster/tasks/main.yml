@@ -1,7 +1,19 @@
+- name: Disable swap [1/2]
+  shell: swapoff -a
+
+- name: Disable swap [2/2]
+  shell: sed -i '/ swap / d' /etc/fstab
+
+- name: Stop SELinux Enforcing [1/2]
+  shell: setenforce 0
+
+- name: Stop SELinux Enforcing [2/2]
+  shell: sed -i 's/^SELINUX=enforcing$/SELINUX=permissive/' /etc/selinux/config
+
 - name: Disable firewalld service
   service: name=firewalld state=stopped enabled=no
 
-- name: yum install -y yum-utils device-mapper-persistent-data lvm2
+- name: Yum install yum-utils device-mapper-persistent-data lvm2
   yum: 
     name:
       - yum-utils
@@ -11,13 +23,10 @@
       present
       
 - name: Add repository
-  shell: yum-config-manager add-repo https://mirrors.aliyun.com/docker-ce/linux/centos/docker-ce.repo
+  copy: src=docker-ce.repo dest=/etc/yum.repos.d/docker-ce.repo
 
-- name: Disable docker edge & test repo
-  shell: yum-config-manager --disable docker-ce-edge && yum-config-manager --disable docker-ce-test
-
-- name: yum install -y docker
-  yum: name=docker-ce-18.06.1.ce-3.el7 state=present
+- name: Yum install docker
+  yum: name=docker-ce-18.06.0.ce state=present
 
 - name: Enable and start Docker service
   service: name=docker state=started enabled=yes
@@ -28,7 +37,13 @@
 - name: Transfer kubernetes.repo
   copy: src=kubernetes.repo dest=/etc/yum.repos.d/kubernetes.repo
 
-- name: yum install -y kubelet kubeadm kubectl
+- name: Transfer file k8s.conf
+  copy: src=k8s.conf dest=/etc/sysctl.d/k8s.conf
+
+- name: Set system parameters for k8s
+  shell: sysctl --system
+
+- name: Yum install kubelet kubeadm kubectl
   yum: 
     name:
       - kubelet 
@@ -37,11 +52,17 @@
     state:
       present
 
-- name: Transfer file k8s.conf
-  copy: src=k8s.conf dest=/etc/sysctl.d/k8s.conf
+- name: Yum install epel-release and pip rpm
+  yum:
+    name:
+      - epel-release
+      - python-pip
+    state:
+      present
 
-- name: Set system parameters for k8s
-  shell: sysctl --system
+- name:  Install docker-py package.
+  pip:
+    name: docker-py
 
 - name: Enable and start kubelet service
   service: name=kubelet state=started enabled=yes
