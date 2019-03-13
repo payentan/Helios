@@ -1,3 +1,5 @@
+# Refer to https://kubernetes.io/docs/setup/independent/install-kubeadm/
+#
 - name: Disable swap [1/2]
   shell: swapoff -a
 
@@ -130,3 +132,14 @@
 - name: Retag kubernetes-dashboard image
   shell: docker tag registry.cn-hangzhou.aliyuncs.com/google_containers/kubernetes-dashboard-amd64:{{ DASHBOARD_VERSION }} k8s.gcr.io/kubernetes-dashboard:{{ DASHBOARD_VERSION }}
 
+- name: Kubeadm init
+  shell: kubeadm init --pod-network-cidr=10.244.0.0/16 || echo
+
+- name: Copy config file
+  shell: mkdir -p $HOME/.kube && cp -i /etc/kubernetes/admin.conf $HOME/.kube/config && chown $(id -u):$(id -g) $HOME/.kube/config
+
+- name: Deploy flannel network to the cluster [1/2]
+  copy: src=kube-flannel.yml dst=~/kube-flannel.yml
+
+- name: Deploy flannel network to the cluster [2/2]
+  shell: kubectl apply -f ~/kube-flannel.yml
