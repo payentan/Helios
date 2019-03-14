@@ -1,4 +1,134 @@
---
-- tasks:
-  - name: echo hello world
-    shell: echo "Hello World!"
+# Refer to https://kubernetes.io/docs/setup/independent/install-kubeadm/
+#
+- name: Disable swap [1/2]
+  shell: swapoff -a
+
+- name: Disable swap [2/2]
+  shell: sed -i '/ swap / d' /etc/fstab
+
+- name: Stop SELinux Enforcing [1/2]
+  shell: setenforce 0
+
+- name: Stop SELinux Enforcing [2/2]
+  shell: sed -i 's/^SELINUX=enforcing$/SELINUX=permissive/' /etc/selinux/config
+
+- name: Disable firewalld service
+  service: name=firewalld state=stopped enabled=no
+
+- name: Yum install yum-utils device-mapper-persistent-data lvm2
+  yum: 
+    name:
+      - yum-utils
+      - device-mapper-persistent-data
+      - lvm2
+    state:
+      present
+      
+- name: Add repository
+  copy: src=docker-ce.repo dest=/etc/yum.repos.d/docker-ce.repo
+
+- name: Yum install docker
+  yum: name=docker-ce-18.06.0.ce state=present
+
+- name: Enable and start Docker service
+  service: name=docker state=started enabled=yes
+
+- name: Try Docker service
+  shell: docker run hello-world
+
+- name: Transfer kubernetes.repo
+  copy: src=kubernetes.repo dest=/etc/yum.repos.d/kubernetes.repo
+
+- name: Transfer file k8s.conf
+  copy: src=k8s.conf dest=/etc/sysctl.d/k8s.conf
+
+- name: Set system parameters for k8s
+  shell: sysctl --system
+
+- name: Yum install kubelet kubeadm kubectl
+  yum: 
+    name:
+      - kubelet 
+      - kubeadm 
+      - kubectl
+    state:
+      present
+
+- name: Yum install epel-release and pip rpm
+  yum:
+    name:
+      - epel-release
+      - python-pip
+    state:
+      present
+
+- name:  Install docker-py package.
+  pip:
+    name: docker-py
+
+- name: Enable and start kubelet service
+  service: name=kubelet state=started enabled=yes
+
+- name: Pull kube-apiserver image 
+  docker_image:
+    name: registry.cn-hangzhou.aliyuncs.com/google_containers/kube-apiserver-amd64:{{ K8S_VERSION }}
+
+- name: Retag kube-apiserver image
+  shell: docker tag registry.cn-hangzhou.aliyuncs.com/google_containers/kube-apiserver-amd64:{{ K8S_VERSION }} k8s.gcr.io/kube-apiserver:{{ K8S_VERSION }}
+
+- name: Pull kube-controller-manager image
+  docker_image:
+    name: registry.cn-hangzhou.aliyuncs.com/google_containers/kube-controller-manager-amd64:{{ K8S_VERSION }}
+
+- name: Retag kube-controller-manager image
+  shell: docker tag registry.cn-hangzhou.aliyuncs.com/google_containers/kube-controller-manager-amd64:{{ K8S_VERSION }} k8s.gcr.io/kube-controller-manager:{{ K8S_VERSION }}
+
+- name: Pull kube-scheduler image
+  docker_image:
+    name: registry.cn-hangzhou.aliyuncs.com/google_containers/kube-scheduler-amd64:{{ K8S_VERSION }}
+
+- name: Retag kube-scheduler image
+  shell: docker tag registry.cn-hangzhou.aliyuncs.com/google_containers/kube-scheduler-amd64:{{ K8S_VERSION }} k8s.gcr.io/kube-scheduler:{{ K8S_VERSION }}
+
+- name: Pull kube-proxy image
+  docker_image:
+    name: registry.cn-hangzhou.aliyuncs.com/google_containers/kube-proxy-amd64:{{ K8S_VERSION }}
+
+- name: Retag kube-proxy image
+  shell: docker tag registry.cn-hangzhou.aliyuncs.com/google_containers/kube-proxy-amd64:{{ K8S_VERSION }} k8s.gcr.io/kube-proxy:{{ K8S_VERSION }}
+
+- name: Pull etcd image
+  docker_image:
+    name: registry.cn-hangzhou.aliyuncs.com/google_containers/etcd-amd64:{{ ETCD_VERSION }}
+
+- name: Retag etcd image
+  shell: docker tag registry.cn-hangzhou.aliyuncs.com/google_containers/etcd-amd64:{{ ETCD_VERSION }} k8s.gcr.io/etcd:{{ ETCD_VERSION }}
+
+- name: Pull pause image
+  docker_image:
+    name: registry.cn-hangzhou.aliyuncs.com/google_containers/pause-amd64:{{ PAUSE_VERSION }}
+
+- name: Retag pause image
+  shell: docker tag registry.cn-hangzhou.aliyuncs.com/google_containers/pause-amd64:{{ PAUSE_VERSION }} k8s.gcr.io/pause:{{ PAUSE_VERSION }}
+
+- name: Pull coredns image
+  docker_image:
+    name: registry.cn-hangzhou.aliyuncs.com/google_containers/coredns:{{ DNS_VERSION }}
+
+- name: Retag coredns image
+  shell: docker tag registry.cn-hangzhou.aliyuncs.com/google_containers/coredns:{{ DNS_VERSION }} k8s.gcr.io/coredns:{{ DNS_VERSION }}
+
+- name: Pull flannel image
+  docker_image:
+    name: registry.cn-hangzhou.aliyuncs.com/kubernetes_containers/flannel:{{ FLANNEL_VERSION }}
+
+- name: Retag flannel image
+  shell: docker tag registry.cn-hangzhou.aliyuncs.com/kubernetes_containers/flannel:{{ FLANNEL_VERSION }} quay.io/coreos/flannel:{{ FLANNEL_VERSION }}
+
+- name: Pull kubernetes-dashboard image
+  docker_image:
+    name: registry.cn-hangzhou.aliyuncs.com/google_containers/kubernetes-dashboard-amd64:{{ DASHBOARD_VERSION }}
+
+- name: Retag kubernetes-dashboard image
+  shell: docker tag registry.cn-hangzhou.aliyuncs.com/google_containers/kubernetes-dashboard-amd64:{{ DASHBOARD_VERSION }} k8s.gcr.io/kubernetes-dashboard:{{ DASHBOARD_VERSION }}
+
