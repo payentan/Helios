@@ -105,6 +105,7 @@
   shell: docker tag registry.cn-hangzhou.aliyuncs.com/google_containers/etcd-amd64:{{ ETCD_VERSION }} k8s.gcr.io/etcd:{{ ETCD_VERSION }}
 
 - name: Pull pause image
+
   docker_image:
     name: registry.cn-hangzhou.aliyuncs.com/google_containers/pause-amd64:{{ PAUSE_VERSION }}
 
