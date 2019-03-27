@@ -1,0 +1,8 @@
+- name: output
+#shell: echo {{ hostvars['192.168.93.136']['ansible_facts']['eth0']['ipv4']['address'] }}
+  shell: echo {{ hostvars['192.168.93.136']['ansible_distribution_file_variety'] }}
+
+#{% for host in groups['k8snode'] %}
+#- name: output
+#  shell: echo {{ hostvars[host]['eth0']['ipv4']['address'] }}
+#{% endfor %}

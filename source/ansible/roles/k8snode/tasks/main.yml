@@ -59,6 +59,24 @@
 - name: Enable and start kubelet service
   service: name=kubelet state=started enabled=yes
 
+- name: Yum install epel-release and pip rpm
+  yum:
+    name:
+      - epel-release
+    state:
+      present
+
+- name: Yum install epel-release and pip rpm
+  yum:
+    name:
+      - python-pip
+    state:
+      present
+
+- name:  Install docker-py package.
+  pip:
+    name: docker-py
+
 - name: Pull pause image
   docker_image:
     name: registry.cn-hangzhou.aliyuncs.com/google_containers/pause-amd64:{{ PAUSE_VERSION }}
@@ -73,4 +91,4 @@
 - name: Retag flannel image
   shell: docker tag registry.cn-hangzhou.aliyuncs.com/kubernetes_containers/flannel:{{ FLANNEL_VERSION }} quay.io/coreos/flannel:{{ FLANNEL_VERSION }}
 
-# kubeadm join
+# kubeadm join --token bfas7b.nujnsjbap4ymf32v 192.168.93.136:6443 --discovery-token-ca-cert-hash sha256:2b3d0c381202dff735e02ba411dc5c7c0bbfa22339d86642d9cde1296656b3b2

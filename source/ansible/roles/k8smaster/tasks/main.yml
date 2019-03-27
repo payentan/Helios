@@ -144,3 +144,17 @@
 
 - name: Deploy flannel network to the cluster [2/2]
   shell: kubectl apply -f ~/kube-flannel.yml
+
+- name: kubeadm token list
+  shell: kubeadm token list
+  register: token_output
+
+- name: echo token_output 
+  shell: echo {{ token_output.stdout.split()[7] }}
+
+- name: Generate discovery-token-ca-cert-hash
+  shell: openssl x509 -pubkey -in /etc/kubernetes/pki/ca.crt | openssl rsa -pubin -outform der 2>/dev/null | openssl dgst -sha256 -hex | sed 's/^.* //'
+  register: hash_output
+
+- name: output token and hash to k8s.fact
+  shell: mkdir -p /etc/ansible/facts.d && echo [k8smaster] token={{ token_output.stdout.split()[7] }} cert_hash={{ hash_output }} > /etc/ansible/facts.d/k8s.fact

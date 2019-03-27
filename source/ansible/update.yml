@@ -1,0 +1,38 @@
+---
+- hosts: k8smaster
+  remote_user: root
+  gather_facts: no
+  tasks:
+  - name: setup
+    setup: 
+  - name: kubeadm token list
+    shell: kubeadm token list
+    register: token_output
+  
+  - name: echo token list
+    shell: echo {{ token_output.stdout.split()[6] }}
+
+  - name: kubeadm token create
+    shell: kubeadm token create
+    when: token_output.stdout.split()[7] is not defined
+
+  - name: kubeadm token list
+    shell: kubeadm token list
+    register: token_output
+
+  - name: echo token_output 
+    shell: echo {{ token_output.stdout.split()[7] }}
+
+  - name: Echo cert_hash
+    shell: echo {{ hostvars['192.168.93.136']['ansible_local']['k8s']['k8smaster']['cert_hash'] }}
+    register: hash_output
+
+  - name: output token and hash to k8s.fact
+    shell: mkdir -p /etc/ansible/facts.d && echo [k8smaster] > /etc/ansible/facts.d/k8s.fact
+    
+  - name: output token
+    shell: echo token={{ token_output.stdout.split()[7] }} >> /etc/ansible/facts.d/k8s.fact 
+    
+  - name: output hash
+    shell: echo cert_hash={{ hash_output.stdout }} >> /etc/ansible/facts.d/k8s.fact
+
