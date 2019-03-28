@@ -5,6 +5,7 @@
   tasks:
   - name: setup
     setup: 
+
   - name: kubeadm token list
     shell: kubeadm token list
     register: token_output
@@ -24,7 +25,7 @@
     shell: echo {{ token_output.stdout.split()[7] }}
 
   - name: Echo cert_hash
-    shell: echo {{ hostvars['192.168.93.136']['ansible_local']['k8s']['k8smaster']['cert_hash'] }}
+    shell: echo {{ ansible_local['k8s']['k8smaster']['cert_hash'] }}
     register: hash_output
 
   - name: output token and hash to k8s.fact
@@ -35,4 +36,7 @@
     
   - name: output hash
     shell: echo cert_hash={{ hash_output.stdout }} >> /etc/ansible/facts.d/k8s.fact
+
+  - name: setup
+    setup: 
 
