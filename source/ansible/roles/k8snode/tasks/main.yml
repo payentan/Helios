@@ -33,9 +33,6 @@
 - name: Enable and start Docker service
   service: name=docker state=started enabled=yes
 
-- name: Try Docker service
-  shell: docker run registry.docker-cn.com/library/hello-world
-
 - name: Transfer kubernetes.repo
   copy: src=kubernetes.repo dest=/etc/yum.repos.d/kubernetes.repo
 
@@ -48,9 +45,9 @@
 - name: Yum install kubelet kubeadm kubectl
   yum: 
     name:
-      - kubelet 
-      - kubeadm 
-      - kubectl
+      - kubelet-{{ K8S_VERSION }}
+      - kubeadm-{{ K8S_VERSION }}
+      - kubectl-{{ K8S_VERSION }}
     state:
       present
     disable_gpg_check:
@@ -59,14 +56,14 @@
 - name: Enable and start kubelet service
   service: name=kubelet state=started enabled=yes
 
-- name: Yum install epel-release and pip rpm
+- name: Yum install epel-release
   yum:
     name:
       - epel-release
     state:
       present
 
-- name: Yum install epel-release and pip rpm
+- name: Yum install pip rpm
   yum:
     name:
       - python-pip
