@@ -156,3 +156,8 @@
 - name: Deploy flannel network to the cluster [3/3]
   shell: rm -f ~/kube-flannel.yml
 
+# TODO: 
+#   docker pull registry:2
+#   docker run -d   --restart=always   --name registry   -v "$(pwd)"/certs:/certs   -e REGISTRY_HTTP_ADDR=0.0.0.0:443   -e REGISTRY_HTTP_TLS_CERTIFICATE=/certs/domain.crt   -e REGISTRY_HTTP_TLS_KEY=/certs/domain.key   -p 443:443   registry:2
+#   openssl req -newkey rsa:4096 -nodes -sha256 -keyout certs/domain.key -x509 -days 365 -out certs/domain.crt
+#   scp /etc/docker/certs.d/192.168.93.135\:443/ca.crt mynode3:/etc/docker/certs.d/192.168.93.135\:443/ca.crt
