@@ -77,69 +77,87 @@
 - name: Enable and start kubelet service
   service: name=kubelet state=started enabled=yes
 
+- name: Check registry container
+  shell: docker images | grep registry
+  ignore_errors: True
+  register: reg_output
+
+- name: Load registry image
+  shell: docker load --input /storage/docker-image/library/registry_2.tar
+  when: reg_output.stdout=="" or reg_output.stdout.split()[0] != "registry"
+
+- name: Create registry container
+  docker_container:
+    name: registry
+    image: registry:2
+    restart_policy: always
+    volumes:
+      - /storage/docker-registry/:/var/lib/registry
+    ports:
+      - "5000:5000"
+
 - name: Pull kube-apiserver image 
   docker_image:
-    name: registry.cn-hangzhou.aliyuncs.com/google_containers/kube-apiserver-amd64:v{{ K8S_VERSION }}
+    name: "{{ DOCKER_REGISTRY }}/k8s.gcr.io/kube-apiserver:v{{ K8S_VERSION }}"
 
 - name: Retag kube-apiserver image
-  shell: docker tag registry.cn-hangzhou.aliyuncs.com/google_containers/kube-apiserver-amd64:v{{ K8S_VERSION }} k8s.gcr.io/kube-apiserver:v{{ K8S_VERSION }}
+  shell: docker tag {{ DOCKER_REGISTRY }}/k8s.gcr.io/kube-apiserver:v{{ K8S_VERSION }} k8s.gcr.io/kube-apiserver:v{{ K8S_VERSION }}
 
 - name: Pull kube-controller-manager image
   docker_image:
-    name: registry.cn-hangzhou.aliyuncs.com/google_containers/kube-controller-manager-amd64:v{{ K8S_VERSION }}
+    name: "{{ DOCKER_REGISTRY }}/k8s.gcr.io/kube-controller-manager:v{{ K8S_VERSION }}"
 
 - name: Retag kube-controller-manager image
-  shell: docker tag registry.cn-hangzhou.aliyuncs.com/google_containers/kube-controller-manager-amd64:v{{ K8S_VERSION }} k8s.gcr.io/kube-controller-manager:v{{ K8S_VERSION }}
+  shell: docker tag {{ DOCKER_REGISTRY }}/k8s.gcr.io/kube-controller-manager:v{{ K8S_VERSION }} k8s.gcr.io/kube-controller-manager:v{{ K8S_VERSION }}
 
 - name: Pull kube-scheduler image
   docker_image:
-    name: registry.cn-hangzhou.aliyuncs.com/google_containers/kube-scheduler-amd64:v{{ K8S_VERSION }}
+    name: "{{ DOCKER_REGISTRY }}/k8s.gcr.io/kube-scheduler:v{{ K8S_VERSION }}"
 
 - name: Retag kube-scheduler image
-  shell: docker tag registry.cn-hangzhou.aliyuncs.com/google_containers/kube-scheduler-amd64:v{{ K8S_VERSION }} k8s.gcr.io/kube-scheduler:v{{ K8S_VERSION }}
+  shell: docker tag {{ DOCKER_REGISTRY }}/k8s.gcr.io/kube-scheduler:v{{ K8S_VERSION }} k8s.gcr.io/kube-scheduler:v{{ K8S_VERSION }}
 
 - name: Pull kube-proxy image
   docker_image:
-    name: registry.cn-hangzhou.aliyuncs.com/google_containers/kube-proxy-amd64:v{{ K8S_VERSION }}
+    name: "{{ DOCKER_REGISTRY }}/k8s.gcr.io/kube-proxy:v{{ K8S_VERSION }}"
 
 - name: Retag kube-proxy image
-  shell: docker tag registry.cn-hangzhou.aliyuncs.com/google_containers/kube-proxy-amd64:v{{ K8S_VERSION }} k8s.gcr.io/kube-proxy:v{{ K8S_VERSION }}
+  shell: docker tag {{ DOCKER_REGISTRY }}/k8s.gcr.io/kube-proxy:v{{ K8S_VERSION }} k8s.gcr.io/kube-proxy:v{{ K8S_VERSION }}
 
 - name: Pull etcd image
   docker_image:
-    name: registry.cn-hangzhou.aliyuncs.com/google_containers/etcd-amd64:{{ ETCD_VERSION }}
+    name: "{{ DOCKER_REGISTRY }}/k8s.gcr.io/etcd:{{ ETCD_VERSION }}"
 
 - name: Retag etcd image
-  shell: docker tag registry.cn-hangzhou.aliyuncs.com/google_containers/etcd-amd64:{{ ETCD_VERSION }} k8s.gcr.io/etcd:{{ ETCD_VERSION }}
+  shell: docker tag {{ DOCKER_REGISTRY }}/k8s.gcr.io/etcd:{{ ETCD_VERSION }} k8s.gcr.io/etcd:{{ ETCD_VERSION }}
 
 - name: Pull pause image
-
   docker_image:
-    name: registry.cn-hangzhou.aliyuncs.com/google_containers/pause-amd64:{{ PAUSE_VERSION }}
+    name: "{{ DOCKER_REGISTRY }}/k8s.gcr.io/pause:{{ PAUSE_VERSION }}"
 
 - name: Retag pause image
-  shell: docker tag registry.cn-hangzhou.aliyuncs.com/google_containers/pause-amd64:{{ PAUSE_VERSION }} k8s.gcr.io/pause:{{ PAUSE_VERSION }}
+  shell: docker tag {{ DOCKER_REGISTRY }}/k8s.gcr.io/pause:{{ PAUSE_VERSION }} k8s.gcr.io/pause:{{ PAUSE_VERSION }}
 
 - name: Pull coredns image
   docker_image:
-    name: registry.cn-hangzhou.aliyuncs.com/google_containers/coredns:{{ DNS_VERSION }}
+    name: "{{ DOCKER_REGISTRY }}/k8s.gcr.io/coredns:{{ DNS_VERSION }}"
 
 - name: Retag coredns image
-  shell: docker tag registry.cn-hangzhou.aliyuncs.com/google_containers/coredns:{{ DNS_VERSION }} k8s.gcr.io/coredns:{{ DNS_VERSION }}
+  shell: docker tag {{ DOCKER_REGISTRY }}/k8s.gcr.io/coredns:{{ DNS_VERSION }} k8s.gcr.io/coredns:{{ DNS_VERSION }}
 
 - name: Pull flannel image
   docker_image:
-    name: registry.cn-hangzhou.aliyuncs.com/kubernetes_containers/flannel:{{ FLANNEL_VERSION }}
+    name: "{{ DOCKER_REGISTRY }}/quay.io/coreos/flannel:{{ FLANNEL_VERSION }}"
 
 - name: Retag flannel image
-  shell: docker tag registry.cn-hangzhou.aliyuncs.com/kubernetes_containers/flannel:{{ FLANNEL_VERSION }} quay.io/coreos/flannel:{{ FLANNEL_VERSION }}
+  shell: docker tag {{ DOCKER_REGISTRY }}/quay.io/coreos/flannel:{{ FLANNEL_VERSION }} quay.io/coreos/flannel:{{ FLANNEL_VERSION }}
 
 - name: Pull kubernetes-dashboard image
   docker_image:
-    name: registry.cn-hangzhou.aliyuncs.com/google_containers/kubernetes-dashboard-amd64:{{ DASHBOARD_VERSION }}
+    name: "{{ DOCKER_REGISTRY }}/k8s.gcr.io/kubernetes-dashboard:{{ DASHBOARD_VERSION }}"
 
 - name: Retag kubernetes-dashboard image
-  shell: docker tag registry.cn-hangzhou.aliyuncs.com/google_containers/kubernetes-dashboard-amd64:{{ DASHBOARD_VERSION }} k8s.gcr.io/kubernetes-dashboard:{{ DASHBOARD_VERSION }}
+  shell: docker tag {{ DOCKER_REGISTRY }}/k8s.gcr.io/kubernetes-dashboard:{{ DASHBOARD_VERSION }} k8s.gcr.io/kubernetes-dashboard:{{ DASHBOARD_VERSION }}
 
 - name: Kubeadm init
   shell: kubeadm init --pod-network-cidr=10.244.0.0/16 || echo

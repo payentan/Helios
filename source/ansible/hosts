@@ -1,5 +1,5 @@
 [k8smaster]
-mynode2 ansible_ssh_user=root
+mynode11 ansible_ssh_user=root
 
 [k8snode]
-mynode3 ansible_ssh_user=root
+mynode12 ansible_ssh_user=root
