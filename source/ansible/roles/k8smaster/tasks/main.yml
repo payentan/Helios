@@ -77,6 +77,20 @@
 - name: Enable and start kubelet service
   service: name=kubelet state=started enabled=yes
 
+- name: Create folder /run/registry/certs/
+  file:
+    path: /run/registry/certs/
+    state: directory
+
+- name: Check /run/registry/certs/ca.crt file 
+  stat:
+    path: /run/registry/certs/ca.crt
+  register: sym
+
+- name: Generate certificate files
+  shell: openssl req -newkey rsa:4096 -nodes -sha256 -keyout /run/registry/certs/ca.key -x509 -days 365 -out /run/registry/certs/ca.crt -subj /CN=mynode11
+  when: sym.stat.exists==False
+
 - name: Check registry container
   shell: docker images | grep registry
   ignore_errors: True
@@ -93,71 +107,75 @@
     restart_policy: always
     volumes:
       - /storage/docker-registry/:/var/lib/registry
+      - /run/registry/certs/:/certs/
     ports:
       - "5000:5000"
+    env:
+      REGISTRY_HTTP_TLS_CERTIFICATE: /certs/ca.crt
+      REGISTRY_HTTP_TLS_KEY: /certs/ca.key 
 
 - name: Pull kube-apiserver image 
   docker_image:
-    name: "{{ DOCKER_REGISTRY }}/k8s.gcr.io/kube-apiserver:v{{ K8S_VERSION }}"
+    name: "{{ DOCKER_REGISTRY }}:{{DOCKER_REGISTRY_PORT}}/k8s.gcr.io/kube-apiserver:v{{ K8S_VERSION }}"
 
 - name: Retag kube-apiserver image
-  shell: docker tag {{ DOCKER_REGISTRY }}/k8s.gcr.io/kube-apiserver:v{{ K8S_VERSION }} k8s.gcr.io/kube-apiserver:v{{ K8S_VERSION }}
+  shell: docker tag {{ DOCKER_REGISTRY }}:{{DOCKER_REGISTRY_PORT}}/k8s.gcr.io/kube-apiserver:v{{ K8S_VERSION }} k8s.gcr.io/kube-apiserver:v{{ K8S_VERSION }}
 
 - name: Pull kube-controller-manager image
   docker_image:
-    name: "{{ DOCKER_REGISTRY }}/k8s.gcr.io/kube-controller-manager:v{{ K8S_VERSION }}"
+    name: "{{ DOCKER_REGISTRY }}:{{DOCKER_REGISTRY_PORT}}/k8s.gcr.io/kube-controller-manager:v{{ K8S_VERSION }}"
 
 - name: Retag kube-controller-manager image
-  shell: docker tag {{ DOCKER_REGISTRY }}/k8s.gcr.io/kube-controller-manager:v{{ K8S_VERSION }} k8s.gcr.io/kube-controller-manager:v{{ K8S_VERSION }}
+  shell: docker tag {{ DOCKER_REGISTRY }}:{{DOCKER_REGISTRY_PORT}}/k8s.gcr.io/kube-controller-manager:v{{ K8S_VERSION }} k8s.gcr.io/kube-controller-manager:v{{ K8S_VERSION }}
 
 - name: Pull kube-scheduler image
   docker_image:
-    name: "{{ DOCKER_REGISTRY }}/k8s.gcr.io/kube-scheduler:v{{ K8S_VERSION }}"
+    name: "{{ DOCKER_REGISTRY }}:{{DOCKER_REGISTRY_PORT}}/k8s.gcr.io/kube-scheduler:v{{ K8S_VERSION }}"
 
 - name: Retag kube-scheduler image
-  shell: docker tag {{ DOCKER_REGISTRY }}/k8s.gcr.io/kube-scheduler:v{{ K8S_VERSION }} k8s.gcr.io/kube-scheduler:v{{ K8S_VERSION }}
+  shell: docker tag {{ DOCKER_REGISTRY }}:{{DOCKER_REGISTRY_PORT}}/k8s.gcr.io/kube-scheduler:v{{ K8S_VERSION }} k8s.gcr.io/kube-scheduler:v{{ K8S_VERSION }}
 
 - name: Pull kube-proxy image
   docker_image:
-    name: "{{ DOCKER_REGISTRY }}/k8s.gcr.io/kube-proxy:v{{ K8S_VERSION }}"
+    name: "{{ DOCKER_REGISTRY }}:{{DOCKER_REGISTRY_PORT}}/k8s.gcr.io/kube-proxy:v{{ K8S_VERSION }}"
 
 - name: Retag kube-proxy image
-  shell: docker tag {{ DOCKER_REGISTRY }}/k8s.gcr.io/kube-proxy:v{{ K8S_VERSION }} k8s.gcr.io/kube-proxy:v{{ K8S_VERSION }}
+  shell: docker tag {{ DOCKER_REGISTRY }}:{{DOCKER_REGISTRY_PORT}}/k8s.gcr.io/kube-proxy:v{{ K8S_VERSION }} k8s.gcr.io/kube-proxy:v{{ K8S_VERSION }}
 
 - name: Pull etcd image
   docker_image:
-    name: "{{ DOCKER_REGISTRY }}/k8s.gcr.io/etcd:{{ ETCD_VERSION }}"
+    name: "{{ DOCKER_REGISTRY }}:{{DOCKER_REGISTRY_PORT}}/k8s.gcr.io/etcd:{{ ETCD_VERSION }}"
 
 - name: Retag etcd image
-  shell: docker tag {{ DOCKER_REGISTRY }}/k8s.gcr.io/etcd:{{ ETCD_VERSION }} k8s.gcr.io/etcd:{{ ETCD_VERSION }}
+  shell: docker tag {{ DOCKER_REGISTRY }}:{{DOCKER_REGISTRY_PORT}}/k8s.gcr.io/etcd:{{ ETCD_VERSION }} k8s.gcr.io/etcd:{{ ETCD_VERSION }}
 
 - name: Pull pause image
   docker_image:
-    name: "{{ DOCKER_REGISTRY }}/k8s.gcr.io/pause:{{ PAUSE_VERSION }}"
+    name: "{{ DOCKER_REGISTRY }}:{{DOCKER_REGISTRY_PORT}}/k8s.gcr.io/pause:{{ PAUSE_VERSION }}"
 
 - name: Retag pause image
-  shell: docker tag {{ DOCKER_REGISTRY }}/k8s.gcr.io/pause:{{ PAUSE_VERSION }} k8s.gcr.io/pause:{{ PAUSE_VERSION }}
+  shell: docker tag {{ DOCKER_REGISTRY }}:{{DOCKER_REGISTRY_PORT}}/k8s.gcr.io/pause:{{ PAUSE_VERSION }} k8s.gcr.io/pause:{{ PAUSE_VERSION }}
 
 - name: Pull coredns image
   docker_image:
-    name: "{{ DOCKER_REGISTRY }}/k8s.gcr.io/coredns:{{ DNS_VERSION }}"
+    name: "{{ DOCKER_REGISTRY }}:{{DOCKER_REGISTRY_PORT}}/k8s.gcr.io/coredns:{{ DNS_VERSION }}"
 
 - name: Retag coredns image
-  shell: docker tag {{ DOCKER_REGISTRY }}/k8s.gcr.io/coredns:{{ DNS_VERSION }} k8s.gcr.io/coredns:{{ DNS_VERSION }}
+  shell: docker tag {{ DOCKER_REGISTRY }}:{{DOCKER_REGISTRY_PORT}}/k8s.gcr.io/coredns:{{ DNS_VERSION }} k8s.gcr.io/coredns:{{ DNS_VERSION }}
 
 - name: Pull flannel image
   docker_image:
-    name: "{{ DOCKER_REGISTRY }}/quay.io/coreos/flannel:{{ FLANNEL_VERSION }}"
+    name: "{{ DOCKER_REGISTRY }}:{{DOCKER_REGISTRY_PORT}}/quay.io/coreos/flannel:{{ FLANNEL_VERSION }}"
 
 - name: Retag flannel image
-  shell: docker tag {{ DOCKER_REGISTRY }}/quay.io/coreos/flannel:{{ FLANNEL_VERSION }} quay.io/coreos/flannel:{{ FLANNEL_VERSION }}
+  shell: docker tag {{ DOCKER_REGISTRY }}:{{DOCKER_REGISTRY_PORT}}/quay.io/coreos/flannel:{{ FLANNEL_VERSION }} quay.io/coreos/flannel:{{ FLANNEL_VERSION }}
 
 - name: Pull kubernetes-dashboard image
   docker_image:
-    name: "{{ DOCKER_REGISTRY }}/k8s.gcr.io/kubernetes-dashboard:{{ DASHBOARD_VERSION }}"
+    name: "{{ DOCKER_REGISTRY }}:{{DOCKER_REGISTRY_PORT}}/k8s.gcr.io/kubernetes-dashboard:{{ DASHBOARD_VERSION }}"
 
 - name: Retag kubernetes-dashboard image
-  shell: docker tag {{ DOCKER_REGISTRY }}/k8s.gcr.io/kubernetes-dashboard:{{ DASHBOARD_VERSION }} k8s.gcr.io/kubernetes-dashboard:{{ DASHBOARD_VERSION }}
+  shell: docker tag {{ DOCKER_REGISTRY }}:{{DOCKER_REGISTRY_PORT}}/k8s.gcr.io/kubernetes-dashboard:{{ DASHBOARD_VERSION }} k8s.gcr.io/kubernetes-dashboard:{{ DASHBOARD_VERSION }}
 
 - name: Kubeadm init
   shell: kubeadm init --pod-network-cidr=10.244.0.0/16 || echo
@@ -177,5 +195,5 @@
 # TODO: 
 #   docker pull registry:2
 #   docker run -d   --restart=always   --name registry   -v "$(pwd)"/certs:/certs   -e REGISTRY_HTTP_ADDR=0.0.0.0:443   -e REGISTRY_HTTP_TLS_CERTIFICATE=/certs/domain.crt   -e REGISTRY_HTTP_TLS_KEY=/certs/domain.key   -p 443:443   registry:2
-#   openssl req -newkey rsa:4096 -nodes -sha256 -keyout certs/domain.key -x509 -days 365 -out certs/domain.crt
+#   openssl req -newkey rsa:4096 -nodes -sha256 -keyout /certs/ca.key -x509 -days 365 -out /certs/ca.crt -subj /CN=mynode11
 #   scp /etc/docker/certs.d/192.168.93.135\:443/ca.crt mynode3:/etc/docker/certs.d/192.168.93.135\:443/ca.crt

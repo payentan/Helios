@@ -3,6 +3,19 @@
   tasks:
 #- name: echo hello world
 #    shell: echo {{ hostvars['mynode11']['ansible_system_vendor'] }}
+
+  - file:
+      path: /run/registry/certs/
+      state: directory
+
+  - stat:
+      path: /run/registry/certs/ca.crt
+    register: sym
+
+  - name: Generate certificate files
+    shell: openssl req -newkey rsa:4096 -nodes -sha256 -keyout /run/registry/certs/ca.key -x509 -days 365 -out /run/registry/certs/ca.crt -subj /CN={{ DOCKER_REGISTRY }}
+    when: sym.stat.exists==False
+
   - name: Check registry container
     shell: docker images | grep registry
     ignore_errors: True
@@ -19,5 +32,9 @@
       restart_policy: always
       volumes:
         - /storage/docker-registry/:/var/lib/registry
+        - /run/registry/certs/:/certs/
       ports:
         - "5000:5000"
+      env:
+        REGISTRY_HTTP_TLS_CERTIFICATE: /certs/ca.crt
+        REGISTRY_HTTP_TLS_KEY: /certs/ca.key 
