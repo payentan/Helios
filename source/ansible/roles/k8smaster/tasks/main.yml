@@ -15,12 +15,13 @@
 - name: Disable firewalld service
   service: name=firewalld state=stopped enabled=no
 
-- name: Yum install yum-utils device-mapper-persistent-data lvm2
+- name: Yum install yum-utils device-mapper-persistent-data lvm2 java-1.8.0-openjdk
   yum: 
     name:
       - yum-utils
       - device-mapper-persistent-data
       - lvm2
+      - java-1.8.0-openjdk
     state:
       present
       
